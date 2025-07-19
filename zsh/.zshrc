@@ -136,3 +136,16 @@ export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"
 # This section can be safely removed at any time if needed.
 [[ ! -r '/Users/jbellegarde/.opam/opam-init/init.zsh' ]] || source '/Users/jbellegarde/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
 # END opam configuration
+export PATH="$HOME/.jenv/bin:$PATH"
+eval "$(jenv init -)"
+
+# >>> juliaup initialize >>>
+
+# !! Contents within this block are managed by juliaup !!
+
+path=('/Users/jbellegarde/.juliaup/bin' $path)
+export PATH
+
+# <<< juliaup initialize <<<
+export PATH="/opt/homebrew/bin:$PATH"
+eval "$(rbenv init -)"
