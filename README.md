@@ -14,7 +14,7 @@ The repository is organized into packages (subdirectories) that mirror the targe
 ~/.dotfiles/
 ├── package1/           # Configuration package
 │   └── .config/        # Target: ~/.config/
-│       └── .datefile   # Target: ~/.dotfile
+│       └── .datefile   # Target: ~/.config/.dotfile
 └── package2/           # Another package
     └── .dotfile        # Target: ~/.dotfile
 ```
