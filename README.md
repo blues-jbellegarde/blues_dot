@@ -8,16 +8,7 @@ This repository centralizes personal configuration files and provides version co
 
 ## Structure
 
-The repository is organized into packages (subdirectories) that mirror the target directory structure:
-
-```
-~/.dotfiles/
-├── package1/           # Configuration package
-│   └── .config/        # Target: ~/.config/
-│       └── .datefile   # Target: ~/.dotfile
-└── package2/           # Another package
-    └── .dotfile        # Target: ~/.dotfile
-```
+Each subdirectory is a package containing config files organized to mirror their target locations. Use `stow <package-name>` to symlink a package to your home directory.
 
 ## Usage
 
