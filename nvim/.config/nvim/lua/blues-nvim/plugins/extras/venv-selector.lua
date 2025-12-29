@@ -6,7 +6,7 @@ return {
 		"mfussenegger/nvim-dap-python", --optional
 		{ "nvim-telescope/telescope.nvim", branch = "0.1.x", dependencies = { "nvim-lua/plenary.nvim" } },
 	},
-	lazy = false, -- Optional: needed only if you want to type `:VenvSelect` without a keymapping
+	lazy = true, -- Lazy load on keymap (loads on <leader>vs or <leader>vc)
 	-- branch = "regexp",
 	config = function()
 		require("venv-selector").setup({

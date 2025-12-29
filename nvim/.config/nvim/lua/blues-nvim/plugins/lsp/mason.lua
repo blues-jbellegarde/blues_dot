@@ -31,6 +31,8 @@ return {
 				"sqlls",
 				"pylsp",
 				"bashls",
+				"gopls",     -- Go LSP
+				"ts_ls",     -- TypeScript/JavaScript LSP
 			},
 			-- auto-install configured servers (with lspconfig)
 			automatic_installation = true, -- not the same as ensure_installed
@@ -41,14 +43,18 @@ return {
 				"prettier", -- prettier formatter
 				"stylua", -- lua formatter
 				"black", -- python formatter
+				"gofumpt", -- go formatter
 				"pylint", -- python linter
 				"debugpy", -- python debugger
 				"selene", -- lua linter
 				"sqlfmt", -- sql formatter
 				"sqlfluff", -- sql linter
+				"golangci-lint", -- go linter (meta-linter with 50+ linters)
+				"eslint_d", -- javascript/typescript linter (daemon mode)
 				"xmlformatter", -- xml formatter
 				"beautysh", -- bash formatter
-				"shellcheck", --bash linter
+				"shellcheck", -- bash linter
+				"delve", -- go debugger
 			},
 		})
 	end,

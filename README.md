@@ -49,10 +49,12 @@ stow -R <package-name>
 Currently configured packages:
 
 - nvim - Neovim configuration
+- zsh - Shell configuration with Oh My Zsh
 - git - Git configuration
+- wezterm - Terminal emulator configuration
+- aerospace - Window manager configuration
+- sqlfluff - SQL linting configuration (dbt-aware with Jinja templater)
 - pylint - Python linting configuration
-- sqruff - SQL formatting configuration
-- sqlfluff - SQL linting configuration
 
 ## Requirements
 

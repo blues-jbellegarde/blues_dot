@@ -8,7 +8,6 @@ return {
 				args = {
 					"lint",
 					"--format=json",
-					"--dialect=ansi",
 					"-",
 				},
 			},
@@ -23,7 +22,11 @@ return {
 			lua = { "selene" },
 			python = { "pylint" },
 			sql = { "sqlfluff" },
-			-- sql = { "sqruff" },
+			go = { "golangci-lint" },
+			javascript = { "eslint_d" },
+			typescript = { "eslint_d" },
+			javascriptreact = { "eslint_d" },
+			typescriptreact = { "eslint_d" },
 		}
 
 		local lint_augroup = api.nvim_create_augroup("lint", { clear = true })
