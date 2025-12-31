@@ -16,6 +16,14 @@ return {
 			auto_refresh = true,
 			dap_enabled = true,
 			poetry_path = "~/Library/Caches/pypoetry/virtualenvs",
+
+			-- Notify on venv change (allows other plugins to react)
+			changed_venv_hooks = {
+				function(venv_path, venv_python)
+					-- Trigger custom event that DAP will listen to
+					vim.api.nvim_exec_autocmds("User", { pattern = "VenvSelectPost" })
+				end,
+			},
 		})
 	end,
 	keys = {
