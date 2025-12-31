@@ -29,6 +29,13 @@ Located in `nvim/.config/nvim/` with lazy.nvim plugin manager.
 - `lua/blues-nvim/config/` - Settings, keymaps, options
 - `lua/blues-nvim/plugins/` - Plugin configs (core, lsp, util, extras)
 
+**Keymap Placement (IMPORTANT):**
+- **Vim/general keymaps** → `lua/blues-nvim/config/keymaps.lua` (navigation, editing, windows, etc.)
+- **Plugin-specific keymaps** → Plugin file's `keys` spec (lazy-loading triggers)
+  - Example: DAP keymaps in `nvim-dap.lua`, not in `keymaps.lua`
+  - Rationale: Ensures plugins load before keymaps execute (prevents lazy-loading delays)
+  - Pattern: Use lazy.nvim's `keys = { ... }` spec in plugin definitions
+
 **Language Support:**
 - Python: pylsp, black (88-char), pylint, debugpy, venv-selector
 - Go: gopls, gofumpt, golangci-lint, delve
@@ -42,6 +49,7 @@ Located in `nvim/.config/nvim/` with lazy.nvim plugin manager.
 - Formatting: conform.nvim
 - Linting: nvim-lint (respects project configs)
 - Completion: nvim-cmp
+- Debugging: nvim-dap + nvim-dap-python (debugpy, UV workspace support)
 - Git: neogit, diffview
 - Database: vim-dadbod
 - AI: copilot.vim, gen.nvim
@@ -56,7 +64,22 @@ Located in `nvim/.config/nvim/` with lazy.nvim plugin manager.
 - `<leader>ll` - Lint file
 - `<leader>vs` - Select Python venv
 
+**Debugging (DAP):**
+- `<F5>` - Start/Continue debugging
+- `<F10>` - Step over
+- `<F11>` - Step into
+- `<F12>` - Step out
+- `<leader>db` - Toggle breakpoint
+- `<leader>du` - Toggle DAP UI
+- `<leader>dtm` - Debug Python test method
+
 Project-specific configs (`.golangci.yml`, `.eslintrc`, `.sqlfluff`, `.prettierrc`, `pyproject.toml`) are automatically respected.
+
+**Python Debugging with UV:**
+- Each UV project requires `debugpy` as a dev dependency: `uv add --dev debugpy`
+- venv-selector automatically detects `.venv` directories in UV workspaces
+- DAP configurations dynamically update when switching venvs via `<leader>vs`
+- Supports pytest, Django, and remote debugging configurations
 
 ## Documentation
 
