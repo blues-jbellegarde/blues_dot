@@ -73,7 +73,6 @@ ZSH_THEME="ys" # set by `omz`
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
     git
-    poetry
 )
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
