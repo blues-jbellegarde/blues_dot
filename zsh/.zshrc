@@ -110,7 +110,7 @@ source $ZSH/oh-my-zsh.sh
 alias ls="eza -ahl"
 
 # NVM pathing
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
@@ -148,3 +148,25 @@ export PATH
 # <<< juliaup initialize <<<
 export PATH="/opt/homebrew/bin:$PATH"
 eval "$(rbenv init -)"
+
+# Some aws vpn functions 
+vpn-check() {
+    nc -z -G 3 "$DBT_KEY_REDSHIFT_HOST" 5439 2>/dev/null \
+    && echo "VPN OK - Redshift reachable" \
+    || echo "VPN DOWN - Redshift unreachable"
+}
+
+vpn-recover() {
+    local gw=$(netstat -nr | grep "default" | grep -v "utun" | awk '{print $2}' | head -1)
+    if [ -z "$gw" ]; then
+     echo "No non-VPN gateway found. Try: networksetup -getinfo Wi-Fi"
+     return 1
+    fi
+    echo "Restoring default gateway: $gw"
+    sudo route delete default
+    sudo route add default "$gw"
+    sudo dscacheutil -flushcache
+    sudo killall -HUP mDNSResponder
+    echo "Network restored. Flush DNS complete."
+}
+
