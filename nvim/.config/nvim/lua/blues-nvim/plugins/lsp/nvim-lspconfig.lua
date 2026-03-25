@@ -79,7 +79,16 @@ return {
 		vim.lsp.config("lua_ls", {
 			cmd = { vim.fn.exepath("lua-language-server") },
 			filetypes = { "lua" },
-			root_markers = { ".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml", "stylua.toml", "selene.toml", "selene.yml", ".git" },
+			root_markers = {
+				".luarc.json",
+				".luarc.jsonc",
+				".luacheckrc",
+				".stylua.toml",
+				"stylua.toml",
+				"selene.toml",
+				"selene.yml",
+				".git",
+			},
 			capabilities = capabilities,
 			on_attach = on_attach,
 			settings = {
@@ -99,7 +108,15 @@ return {
 		vim.lsp.config("pylsp", {
 			cmd = { vim.fn.exepath("pylsp") },
 			filetypes = { "python" },
-			root_markers = { "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", "Pipfile", "pyrightconfig.json", ".git" },
+			root_markers = {
+				"pyproject.toml",
+				"setup.py",
+				"setup.cfg",
+				"requirements.txt",
+				"Pipfile",
+				"pyrightconfig.json",
+				".git",
+			},
 			capabilities = capabilities,
 			on_attach = on_attach,
 			settings = {
@@ -143,7 +160,14 @@ return {
 		-- TypeScript language server
 		vim.lsp.config("ts_ls", {
 			cmd = { vim.fn.exepath("typescript-language-server"), "--stdio" },
-			filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
+			filetypes = {
+				"javascript",
+				"javascriptreact",
+				"javascript.jsx",
+				"typescript",
+				"typescriptreact",
+				"typescript.tsx",
+			},
 			root_markers = { "tsconfig.json", "jsconfig.json", "package.json", ".git" },
 			capabilities = capabilities,
 			on_attach = on_attach,
@@ -157,15 +181,6 @@ return {
 			},
 		})
 
-		-- SQL language server
-		vim.lsp.config("sqlls", {
-			cmd = { vim.fn.exepath("sql-language-server"), "up", "--method", "stdio" },
-			filetypes = { "sql", "mysql" },
-			root_markers = { ".git" },
-			capabilities = capabilities,
-			on_attach = on_attach,
-		})
-
 		-- Bash language server
 		vim.lsp.config("bashls", {
 			cmd = { vim.fn.exepath("bash-language-server"), "start" },
@@ -175,12 +190,21 @@ return {
 			on_attach = on_attach,
 		})
 
+		-- Just language server
+		vim.lsp.config("just_lsp", {
+			cmd = { vim.fn.exepath("just-lsp") },
+			filetypes = { "just" },
+			root_markers = { "justfile", ".justfile", ".git" },
+			capabilities = capabilities,
+			on_attach = on_attach,
+		})
+
 		-- Enable the configured servers
 		vim.lsp.enable("lua_ls")
 		vim.lsp.enable("pylsp")
 		vim.lsp.enable("gopls")
 		vim.lsp.enable("ts_ls")
-		vim.lsp.enable("sqlls")
 		vim.lsp.enable("bashls")
+		vim.lsp.enable("just_lsp")
 	end,
 }

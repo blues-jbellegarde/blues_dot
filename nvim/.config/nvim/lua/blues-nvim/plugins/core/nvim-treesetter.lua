@@ -39,6 +39,7 @@ return {
 				"norg",
 				-- Other
 				"diff",
+				"just",
 				"regex",
 			},
 			sync_install = false,

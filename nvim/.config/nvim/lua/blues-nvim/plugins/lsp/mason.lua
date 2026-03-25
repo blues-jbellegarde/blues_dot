@@ -28,11 +28,11 @@ return {
 			-- list of servers for mason to install
 			ensure_installed = {
 				"lua_ls",
-				"sqlls",
 				"pylsp",
 				"bashls",
-				"gopls",     -- Go LSP
-				"ts_ls",     -- TypeScript/JavaScript LSP
+				"gopls", -- Go LSP
+				"ts_ls", -- TypeScript/JavaScript LSP
+				"just", -- Just/Justfile LSP
 			},
 			-- auto-install configured servers (with lspconfig)
 			automatic_installation = true, -- not the same as ensure_installed
