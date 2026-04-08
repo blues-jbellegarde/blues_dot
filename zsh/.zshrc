@@ -77,6 +77,9 @@ plugins=(
 
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
+# Custom completions (e.g. just)
+fpath=($HOME/.zsh/completions $fpath)
+
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
