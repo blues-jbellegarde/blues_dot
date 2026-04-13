@@ -81,6 +81,28 @@ Project-specific configs (`.golangci.yml`, `.eslintrc`, `.sqlfluff`, `.prettierr
 - DAP configurations dynamically update when switching venvs via `<leader>vs`
 - Supports pytest, Django, and remote debugging configurations
 
+## Neovim Headless MCP Server
+
+A custom MCP server (`claude/mcp-nvim-server/`) bridges Claude Code to a persistent Neovim headless instance. Prefer these tools over built-in alternatives when they save tokens:
+
+**When to use nvim MCP tools:**
+- **Rename symbol** → `nvim_rename` instead of grep + multi-file Edit (cross-file LSP rename)
+- **Find references** → `nvim_references` instead of Grep (semantic, no false positives)
+- **Find definition** → `nvim_definition` instead of Grep (exact location)
+- **Read specific function from large file** → `nvim_get_node` instead of reading entire file
+- **Auto-fix imports** → `nvim_code_action` for LSP quick fixes
+
+**Handled automatically by PostToolUse hook (no action needed):**
+- Formatting via conform.nvim (black, prettier, gofumpt, stylua, etc.)
+- Linting via nvim-lint (pylint, eslint_d, golangci-lint, selene, sqlfluff)
+- Lint diagnostics appear in context — fix them before moving on
+
+**Management (via justfile):**
+- `just claude-deploy` — deploy MCP server to `~/.claude/`
+- `just claude-nvim-status` — check headless nvim status
+- `just claude-nvim-restart` — restart after config changes
+- `just claude-nvim-stop` — stop headless nvim
+
 ## Documentation
 
 - GNU Stow documentation: https://www.gnu.org/software/stow/manual/stow.html

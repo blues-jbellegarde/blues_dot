@@ -1,0 +1,8 @@
+[project]
+name = "mcp-nvim-server"
+version = "0.1.0"
+description = "Custom MCP server bridging Claude Code to Neovim headless for formatting, linting, LSP, and treesitter"
+requires-python = ">=3.11"
+dependencies = [
+    "pynvim>=0.6.0",
+]
