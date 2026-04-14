@@ -10,7 +10,7 @@ if [ -z "$FILE_PATH" ] || [ ! -f "$FILE_PATH" ]; then
     exit 0
 fi
 
-SOCKET="${NVIM_SOCKET:-/tmp/nvim-claude.sock}"
+SOCKET="${NVIM_SOCKET:-${HOME}/.cache/nvim-claude/nvim-claude.sock}"
 
 # Skip silently if headless nvim is not running
 if ! nvim --server "$SOCKET" --remote-expr 'v:version' &>/dev/null; then

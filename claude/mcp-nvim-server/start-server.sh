@@ -2,7 +2,9 @@
 # Start the Neovim headless MCP server.
 # Auto-starts a headless Neovim instance if one is not already listening.
 
-SOCKET="${NVIM_SOCKET:-/tmp/nvim-claude.sock}"
+SOCKET_DIR="${HOME}/.cache/nvim-claude"
+mkdir -p "$SOCKET_DIR" && chmod 700 "$SOCKET_DIR"
+SOCKET="${NVIM_SOCKET:-${SOCKET_DIR}/nvim-claude.sock}"
 
 # Start headless nvim if not already running
 if ! nvim --server "$SOCKET" --remote-expr 'v:version' &>/dev/null; then

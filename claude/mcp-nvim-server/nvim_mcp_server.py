@@ -16,7 +16,10 @@ from typing import Any, Dict
 
 import pynvim
 
-SOCKET_PATH = os.environ.get("NVIM_SOCKET", "/tmp/nvim-claude.sock")
+SOCKET_PATH = os.environ.get(
+    "NVIM_SOCKET",
+    os.path.expanduser("~/.cache/nvim-claude/nvim-claude.sock"),
+)
 LSP_TIMEOUT_S = 10
 LSP_REQUEST_TIMEOUT_MS = 5000
 

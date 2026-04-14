@@ -1,6 +1,6 @@
 # Dotfiles management recipes
 
-nvim_socket := "/tmp/nvim-claude.sock"
+nvim_socket := env("HOME") / ".cache/nvim-claude/nvim-claude.sock"
 
 # Deploy nvim MCP server to ~/.claude/
 claude-deploy:
@@ -15,6 +15,7 @@ claude-nvim-stop:
 
 # Restart headless nvim (after config changes)
 claude-nvim-restart: claude-nvim-stop
+    mkdir -p "$(dirname {{ nvim_socket }})" && chmod 700 "$(dirname {{ nvim_socket }})"
     nvim --headless --listen {{ nvim_socket }} -c 'set noswapfile' &
 
 # Check headless nvim status
