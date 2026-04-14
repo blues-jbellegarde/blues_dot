@@ -11,6 +11,7 @@ import sys
 import json
 import time
 import asyncio
+import subprocess
 from dataclasses import dataclass
 from typing import Any, Dict
 
@@ -253,10 +254,33 @@ class NvimMCPServer:
             },
         )
 
+        self.tools["jq"] = MCPTool(
+            name="jq",
+            description="Run a jq query against a JSON file. Useful for extracting specific sections from large JSON files (e.g., Grafana dashboards). Returns the matched JSON.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Absolute path to the JSON file",
+                    },
+                    "query": {
+                        "type": "string",
+                        "description": "jq filter expression (e.g., '.panels[3]', '.panels[] | {title, type}', '.templating.list[] | .name')",
+                    },
+                },
+                "required": ["file_path", "query"],
+            },
+        )
+
     # ── tool execution ───────────────────────────────────────────────────
 
     def _execute_tool_sync(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Execute a tool synchronously (runs in thread executor)."""
+        # jq doesn't need neovim
+        if tool_name == "jq":
+            return self._exec_jq(arguments["file_path"], arguments["query"])
+
         self._connect()
 
         if tool_name == "nvim_format":
@@ -629,6 +653,30 @@ class NvimMCPServer:
             )
             self._close_buffer()
             return result
+        except Exception as exc:
+            return json.dumps({"error": str(exc), "file": file_path})
+
+    def _exec_jq(self, file_path: str, query: str) -> str:
+        try:
+            result = subprocess.run(
+                ["jq", query, file_path],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode != 0:
+                return json.dumps(
+                    {"error": result.stderr.strip(), "file": file_path, "query": query}
+                )
+            return json.dumps(
+                {"file": file_path, "query": query, "result": result.stdout.strip()}
+            )
+        except FileNotFoundError:
+            return json.dumps({"error": "jq not found in PATH"})
+        except subprocess.TimeoutExpired:
+            return json.dumps(
+                {"error": "jq timed out", "file": file_path, "query": query}
+            )
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
 
