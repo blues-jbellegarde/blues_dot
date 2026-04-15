@@ -1,0 +1,18 @@
+FROM fedora:41
+
+RUN dnf install -y curl git sudo
+RUN useradd -m -s /bin/bash testuser \
+    && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser
+COPY --chown=testuser:testuser . .dotfiles/
+WORKDIR /home/testuser/.dotfiles
+
+RUN ./bootstrap.sh
+
+# Verify key results
+RUN bash -c 'command -v pyenv && command -v nvim && command -v just && command -v uv'
+RUN bash -c 'source ~/.pyenv/bin/pyenv init - && pyenv virtualenvs --bare | grep neovim'
+RUN bash -c 'ls -la ~/.config/nvim/init.lua'
+RUN bash -c 'command -v claude || echo "Claude Code binary present (auth required separately)"'

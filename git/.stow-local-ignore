@@ -1,0 +1,26 @@
+# Stow default ignores (replicated here because .stow-local-ignore
+# overrides the entire default list). Only change: .gitignore removed
+# so it gets stowed to ~/.gitignore.
+
+RCS
+.+,v
+
+CVS
+\.\#.+
+\.cvsignore
+
+\.svn
+_darcs
+\.hg
+
+\.git
+\.gitmodules
+
+.+~
+\#.*\#
+
+^/README.*
+^/LICENSE.*
+^/COPYING
+
+\.stow-local-ignore
