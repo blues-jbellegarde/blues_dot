@@ -23,6 +23,8 @@ SOCKET_PATH = os.environ.get(
 )
 LSP_TIMEOUT_S = 10
 LSP_REQUEST_TIMEOUT_MS = 5000
+LINT_SETTLE_S = 1.0
+DIAG_SETTLE_S = 0.5
 
 
 @dataclass
@@ -54,7 +56,8 @@ class NvimMCPServer:
     def _open_file(self, filepath: str):
         """Open a file in the headless Neovim instance."""
         self._connect()
-        self.nvim.command(f"edit {filepath}")
+        escaped = self.nvim.funcs.fnameescape(filepath)
+        self.nvim.command(f"edit {escaped}")
 
     def _close_buffer(self):
         """Close the current buffer to keep the instance stateless."""
@@ -333,7 +336,7 @@ class NvimMCPServer:
 
     async def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
         """Async wrapper — runs synchronous pynvim calls in a thread executor."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(
             None, self._execute_tool_sync, tool_name, arguments
         )
@@ -345,19 +348,18 @@ class NvimMCPServer:
             self._open_file(file_path)
             self.nvim.exec_lua('require("conform").format({bufnr = 0, async = false})')
             self.nvim.command("write")
-            self._close_buffer()
             return json.dumps({"formatted": True, "file": file_path})
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_lint(self, file_path: str) -> str:
         try:
             self._open_file(file_path)
             self.nvim.exec_lua('require("lint").try_lint()')
-            # Allow async linters to finish
-            time.sleep(1)
+            time.sleep(LINT_SETTLE_S)
             diags_json = self._get_diagnostics_json()
-            self._close_buffer()
             diagnostics = json.loads(diags_json)
             return json.dumps(
                 {
@@ -368,15 +370,15 @@ class NvimMCPServer:
             )
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_diagnostics(self, file_path: str) -> str:
         try:
             self._open_file(file_path)
             if self._wait_for_lsp():
-                # Give LSP a moment to produce diagnostics
-                time.sleep(0.5)
+                time.sleep(DIAG_SETTLE_S)
             diags_json = self._get_diagnostics_json()
-            self._close_buffer()
             diagnostics = json.loads(diags_json)
             return json.dumps(
                 {
@@ -387,15 +389,15 @@ class NvimMCPServer:
             )
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_rename(self, file_path: str, line: int, col: int, new_name: str) -> str:
         try:
             self._open_file(file_path)
             if not self._wait_for_lsp():
-                self._close_buffer()
                 return json.dumps({"error": "LSP not available", "file": file_path})
 
-            # Position cursor (0-indexed for nvim API)
             self.nvim.api.win_set_cursor(0, [line, col - 1])
 
             result = self.nvim.exec_lua(
@@ -444,16 +446,16 @@ class NvimMCPServer:
                 new_name,
                 LSP_REQUEST_TIMEOUT_MS,
             )
-            self._close_buffer()
             return result
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_references(self, file_path: str, line: int, col: int) -> str:
         try:
             self._open_file(file_path)
             if not self._wait_for_lsp():
-                self._close_buffer()
                 return json.dumps({"error": "LSP not available", "file": file_path})
 
             self.nvim.api.win_set_cursor(0, [line, col - 1])
@@ -486,16 +488,16 @@ class NvimMCPServer:
                 """,
                 LSP_REQUEST_TIMEOUT_MS,
             )
-            self._close_buffer()
             return result
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_definition(self, file_path: str, line: int, col: int) -> str:
         try:
             self._open_file(file_path)
             if not self._wait_for_lsp():
-                self._close_buffer()
                 return json.dumps({"error": "LSP not available", "file": file_path})
 
             self.nvim.api.win_set_cursor(0, [line, col - 1])
@@ -532,10 +534,11 @@ class NvimMCPServer:
                 """,
                 LSP_REQUEST_TIMEOUT_MS,
             )
-            self._close_buffer()
             return result
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_code_action(
         self, file_path: str, line: int, col: int, execute_index: int = None
@@ -543,7 +546,6 @@ class NvimMCPServer:
         try:
             self._open_file(file_path)
             if not self._wait_for_lsp():
-                self._close_buffer()
                 return json.dumps({"error": "LSP not available", "file": file_path})
 
             self.nvim.api.win_set_cursor(0, [line, col - 1])
@@ -604,10 +606,11 @@ class NvimMCPServer:
                 execute_index,
                 LSP_REQUEST_TIMEOUT_MS,
             )
-            self._close_buffer()
             return result
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_get_node(self, file_path: str, line: int, node_type: str) -> str:
         try:
@@ -651,10 +654,11 @@ class NvimMCPServer:
                 """,
                 node_type,
             )
-            self._close_buffer()
             return result
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
 
     def _exec_jq(self, file_path: str, query: str) -> str:
         try:
@@ -740,7 +744,7 @@ class NvimMCPServer:
         """Run the MCP server using stdio transport."""
         while True:
             try:
-                line = await asyncio.get_event_loop().run_in_executor(
+                line = await asyncio.get_running_loop().run_in_executor(
                     None, sys.stdin.readline
                 )
                 if not line:

@@ -15,6 +15,11 @@ if ! nvim --server "$SOCKET" --remote-expr 'v:version' &>/dev/null; then
         nvim --server "$SOCKET" --remote-expr 'v:version' &>/dev/null && break
         sleep 0.1
     done
+
+    if ! nvim --server "$SOCKET" --remote-expr 'v:version' &>/dev/null; then
+        echo "ERROR: Headless Neovim failed to start (socket: $SOCKET)" >&2
+        exit 1
+    fi
 fi
 
 # Start MCP server

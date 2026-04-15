@@ -27,7 +27,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "bash /Users/jbellegarde/.claude/analytics-statusline.sh"
+    "command": "bash ~/.claude/analytics-statusline.sh"
   },
   "model": "opus[1m]"
 }
