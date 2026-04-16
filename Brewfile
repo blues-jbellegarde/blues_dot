@@ -12,6 +12,7 @@ brew "jq"
 brew "curl"
 brew "wget"
 brew "zsh"
+brew "rsync"
 
 # Languages
 brew "go"

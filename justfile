@@ -70,21 +70,21 @@ install-packages:
         ubuntu|debian)
             sudo apt update
             sudo apt install -y \
-                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh \
+                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
                 golang podman \
                 build-essential libssl-dev libbz2-dev libreadline-dev libsqlite3-dev \
                 libffi-dev liblzma-dev zlib1g-dev tk-dev
             ;;
         fedora)
             sudo dnf install -y \
-                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh \
+                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
                 golang podman \
                 gcc make zlib-devel bzip2-devel readline-devel sqlite-devel \
                 openssl-devel libffi-devel xz-devel tk-devel
             ;;
         arch)
             sudo pacman -S --needed --noconfirm \
-                stow neovim git github-cli just eza ripgrep fd fzf jq curl wget zsh \
+                stow neovim git github-cli just eza ripgrep fd fzf jq curl wget zsh rsync \
                 go podman \
                 base-devel openssl zlib xz tk
             ;;
@@ -102,12 +102,14 @@ setup-shell:
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         echo "Installing Oh My Zsh..."
         sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        # Remove OMZ's default .zshrc — stow-all will provide ours
+        rm -f "$HOME/.zshrc"
     else
         echo "Oh My Zsh already installed"
     fi
     if [[ "$(uname)" != "Darwin" ]] && [[ "$SHELL" != */zsh ]]; then
         echo "Setting zsh as default shell..."
-        chsh -s "$(which zsh)"
+        sudo chsh -s "$(which zsh)" "$(whoami)"
     fi
 
 # Install pyenv and pyenv-virtualenv
