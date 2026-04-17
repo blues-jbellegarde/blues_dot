@@ -70,8 +70,8 @@ install-packages:
         ubuntu|debian)
             sudo apt update
             sudo apt install -y \
-                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
-                golang podman \
+                stow git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
+                golang podman fuse \
                 build-essential libssl-dev libbz2-dev libreadline-dev libsqlite3-dev \
                 libffi-dev liblzma-dev zlib1g-dev tk-dev
             # fd-find installs as fdfind on Debian/Ubuntu
@@ -82,15 +82,15 @@ install-packages:
             ;;
         fedora)
             sudo dnf install -y \
-                stow neovim git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
-                golang podman \
+                stow git gh just eza ripgrep fd-find fzf jq curl wget zsh rsync \
+                golang podman fuse \
                 gcc make zlib-devel bzip2-devel readline-devel sqlite-devel \
                 openssl-devel libffi-devel xz-devel tk-devel
             ;;
         arch)
             sudo pacman -S --needed --noconfirm \
                 stow neovim git github-cli just eza ripgrep fd fzf jq curl wget zsh rsync \
-                go podman \
+                go podman fuse2 \
                 base-devel openssl zlib xz tk
             ;;
         *)
@@ -98,6 +98,13 @@ install-packages:
             exit 1
             ;;
     esac
+    # Install latest stable Neovim via AppImage on Linux (distro packages are too old for 0.11+ APIs)
+    if [[ "$(uname)" != "Darwin" ]] && ! nvim --version 2>/dev/null | head -1 | grep -qE 'v0\.(1[1-9]|[2-9][0-9])'; then
+        echo "Installing Neovim via AppImage..."
+        curl -Lo /tmp/nvim.appimage "https://github.com/neovim/neovim/releases/latest/download/nvim-linux-$(uname -m).appimage"
+        chmod +x /tmp/nvim.appimage
+        sudo mv /tmp/nvim.appimage /usr/local/bin/nvim
+    fi
     echo "Packages installed for {{ os }}"
 
 # Install oh-my-zsh and set zsh as default shell

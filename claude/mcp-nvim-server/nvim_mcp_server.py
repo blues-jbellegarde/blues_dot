@@ -556,7 +556,7 @@ class NvimMCPServer:
                 local execute_index = args[1]
                 local timeout_ms = args[2]
                 local params = vim.lsp.util.make_range_params(0)
-                params.context = {diagnostics = vim.lsp.diagnostic.get_line_diagnostics(0)}
+                params.context = {diagnostics = vim.diagnostic.get(0, {lnum = vim.api.nvim_win_get_cursor(0)[1] - 1})}
 
                 local results = vim.lsp.buf_request_sync(0, "textDocument/codeAction", params, timeout_ms)
                 if not results or vim.tbl_isempty(results) then

@@ -17,3 +17,4 @@ ENV PATH="/home/testuser/.pyenv/bin:/home/testuser/.local/bin:${PATH}"
 RUN command -v pyenv && command -v nvim && command -v just && command -v uv
 RUN bash -c 'eval "$(pyenv init -)" && pyenv virtualenvs --bare | grep neovim'
 RUN ls -la ~/.config/nvim/init.lua
+RUN nvim --headless -c 'quitall' 2>&1

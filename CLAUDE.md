@@ -18,7 +18,7 @@ This is an actively maintained dotfiles repository for a data engineer working p
 
 - **Languages:** Python, Go, JavaScript/TypeScript, SQL (dbt + Redshift)
 - **Tools:** Neovim, WezTerm, Aerospace WM
-- **Version Managers:** pyenv, nvm, jenv, rbenv
+- **Version Managers:** pyenv, nvm
 - **Focus:** Data engineering, analytics, dbt development
 
 ## Neovim Configuration
@@ -44,7 +44,7 @@ Located in `nvim/.config/nvim/` with lazy.nvim plugin manager.
 - Python: pylsp, black (88-char), pylint, debugpy, venv-selector
 - Go: gopls, gofumpt, golangci-lint, delve
 - TypeScript/JavaScript: ts_ls, prettier, eslint_d
-- SQL/dbt: sqlls, sqlfluff (Jinja templater, Redshift dialect)
+- SQL/dbt: sqlfluff (Jinja templater, Redshift dialect)
 - Lua: lua_ls, stylua, selene
 - Bash: bashls, beautysh, shellcheck
 
