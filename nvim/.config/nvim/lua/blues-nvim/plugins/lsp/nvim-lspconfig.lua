@@ -191,7 +191,7 @@ return {
 		})
 
 		-- Just language server
-		vim.lsp.config("just_lsp", {
+		vim.lsp.config("just", {
 			cmd = { vim.fn.exepath("just-lsp") },
 			filetypes = { "just" },
 			root_markers = { "justfile", ".justfile", ".git" },
@@ -205,6 +205,6 @@ return {
 		vim.lsp.enable("gopls")
 		vim.lsp.enable("ts_ls")
 		vim.lsp.enable("bashls")
-		vim.lsp.enable("just_lsp")
+		vim.lsp.enable("just")
 	end,
 }

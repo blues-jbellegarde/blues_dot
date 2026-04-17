@@ -74,6 +74,11 @@ install-packages:
                 golang podman \
                 build-essential libssl-dev libbz2-dev libreadline-dev libsqlite3-dev \
                 libffi-dev liblzma-dev zlib1g-dev tk-dev
+            # fd-find installs as fdfind on Debian/Ubuntu
+            if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+                mkdir -p "$HOME/.local/bin"
+                ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+            fi
             ;;
         fedora)
             sudo dnf install -y \
@@ -165,13 +170,17 @@ setup-python:
 setup-nvm:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [[ -d "$HOME/.nvm" ]]; then
+    if [[ -z "${XDG_CONFIG_HOME-}" ]]; then
+        export NVM_DIR="$HOME/.nvm"
+    else
+        export NVM_DIR="${XDG_CONFIG_HOME}/nvm"
+    fi
+    if [[ -d "$NVM_DIR" ]]; then
         echo "nvm already installed"
     else
         echo "Installing nvm..."
         curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
     fi
-    export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
     echo "Installing latest LTS Node..."
     nvm install --lts

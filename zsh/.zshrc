@@ -75,7 +75,11 @@ plugins=(
     git
 )
 
-[[ -f /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ -f /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
 
 # Custom completions (e.g. just)
 fpath=($HOME/.zsh/completions $fpath)

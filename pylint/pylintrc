@@ -11,12 +11,13 @@ single-line-if-stmt=no
 
 [MESSAGES CONTROL]
 # Disable some overly strict checks
-disable=C0111,  # missing-docstring
-        C0103,  # invalid-name (for short variable names)
-        R0903,  # too-few-public-methods
-        R0913,  # too-many-arguments
-        W0212,  # protected-access
-        C0301   # line-too-long (black handles this)
+# C0111: missing-docstring
+# C0103: invalid-name (for short variable names)
+# R0903: too-few-public-methods
+# R0913: too-many-arguments
+# W0212: protected-access
+# C0301: line-too-long (black handles this)
+disable=C0111,C0103,R0903,R0913,W0212,C0301
 
 [BASIC]
 # Good variable names
