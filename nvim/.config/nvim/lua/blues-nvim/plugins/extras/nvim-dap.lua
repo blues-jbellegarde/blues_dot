@@ -6,11 +6,41 @@ return {
 		"theHamsta/nvim-dap-virtual-text",
 	},
 	keys = {
-		{ "<F5>", function() require("dap").continue() end, desc = "DAP: Continue/Start debugging" },
-		{ "<F10>", function() require("dap").step_over() end, desc = "DAP: Step over" },
-		{ "<F11>", function() require("dap").step_into() end, desc = "DAP: Step into" },
-		{ "<F12>", function() require("dap").step_out() end, desc = "DAP: Step out" },
-		{ "<leader>db", function() require("dap").toggle_breakpoint() end, desc = "DAP: Toggle breakpoint" },
+		{
+			"<F5>",
+			function()
+				require("dap").continue()
+			end,
+			desc = "DAP: Continue/Start debugging",
+		},
+		{
+			"<F10>",
+			function()
+				require("dap").step_over()
+			end,
+			desc = "DAP: Step over",
+		},
+		{
+			"<F11>",
+			function()
+				require("dap").step_into()
+			end,
+			desc = "DAP: Step into",
+		},
+		{
+			"<F12>",
+			function()
+				require("dap").step_out()
+			end,
+			desc = "DAP: Step out",
+		},
+		{
+			"<leader>db",
+			function()
+				require("dap").toggle_breakpoint()
+			end,
+			desc = "DAP: Toggle breakpoint",
+		},
 		{
 			"<leader>dB",
 			function()
@@ -25,11 +55,41 @@ return {
 			end,
 			desc = "DAP: Set log point",
 		},
-		{ "<leader>dc", function() require("dap").clear_breakpoints() end, desc = "DAP: Clear all breakpoints" },
-		{ "<leader>dr", function() require("dap").repl.toggle() end, desc = "DAP: Toggle REPL" },
-		{ "<leader>dl", function() require("dap").run_last() end, desc = "DAP: Run last debug session" },
-		{ "<leader>dt", function() require("dap").terminate() end, desc = "DAP: Terminate debug session" },
-		{ "<leader>dp", function() require("dap").pause() end, desc = "DAP: Pause execution" },
+		{
+			"<leader>dc",
+			function()
+				require("dap").clear_breakpoints()
+			end,
+			desc = "DAP: Clear all breakpoints",
+		},
+		{
+			"<leader>dr",
+			function()
+				require("dap").repl.toggle()
+			end,
+			desc = "DAP: Toggle REPL",
+		},
+		{
+			"<leader>dl",
+			function()
+				require("dap").run_last()
+			end,
+			desc = "DAP: Run last debug session",
+		},
+		{
+			"<leader>dq",
+			function()
+				require("dap").terminate()
+			end,
+			desc = "DAP: Terminate debug session",
+		},
+		{
+			"<leader>dp",
+			function()
+				require("dap").pause()
+			end,
+			desc = "DAP: Pause execution",
+		},
 	},
 	config = function()
 		local dap = require("dap")
