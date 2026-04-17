@@ -1,0 +1,28 @@
+[MAIN]
+# Add current directory and src directories to path for local imports
+init-hook='import sys; sys.path.append(".")'
+
+[FORMAT]
+# Maximum number of characters on a single line (match black's default)
+max-line-length=88
+
+# Allow the body of an if to be on the same line as the test if there is no else
+single-line-if-stmt=no
+
+[MESSAGES CONTROL]
+# Disable some overly strict checks
+# C0111: missing-docstring
+# C0103: invalid-name (for short variable names)
+# R0903: too-few-public-methods
+# R0913: too-many-arguments
+# W0212: protected-access
+# C0301: line-too-long (black handles this)
+disable=C0111,C0103,R0903,R0913,W0212,C0301
+
+[BASIC]
+# Good variable names
+good-names=i,j,k,ex,Run,_,id,db,pk
+
+[DESIGN]
+max-args=7
+max-attributes=10

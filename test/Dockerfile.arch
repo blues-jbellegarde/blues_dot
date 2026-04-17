@@ -1,0 +1,20 @@
+# NOTE: archlinux image is x86_64 only — cannot test on Apple Silicon without QEMU emulation
+FROM archlinux:latest
+
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm curl git sudo
+RUN useradd -m -s /bin/bash testuser \
+    && echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser
+COPY --chown=testuser:testuser . .dotfiles/
+WORKDIR /home/testuser/.dotfiles
+
+RUN ./bootstrap.sh
+
+# Verify key results (source paths since RUN doesn't get interactive shell)
+ENV PATH="/home/testuser/.pyenv/bin:/home/testuser/.local/bin:${PATH}"
+RUN command -v pyenv && command -v nvim && command -v just && command -v uv
+RUN bash -c 'eval "$(pyenv init -)" && pyenv virtualenvs --bare | grep neovim'
+RUN ls -la ~/.config/nvim/init.lua
+RUN nvim --headless -c 'quitall' 2>&1

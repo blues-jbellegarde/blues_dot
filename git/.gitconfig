@@ -1,11 +1,11 @@
 [core]
-	excludesfile = /Users/jbellegarde/.gitignore
+	excludesfile = ~/.gitignore
 [user]
 	name = Jason Bellegarde
 	email = jbellegarde@blues.com
 [credential "https://github.com"]
 	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential
 [credential "https://gist.github.com"]
 	helper = 
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential
