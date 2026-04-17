@@ -54,4 +54,3 @@ Currently configured packages:
 ## License
 
 MIT
-
