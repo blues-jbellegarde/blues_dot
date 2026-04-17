@@ -1,4 +1,5 @@
 [sqlfluff]
+dialect = redshift
 exclude_rules = layout.indent, layout.cte_bracket, layout.select_targets, layout.spacing
 max_line_length = 88
 
@@ -9,5 +10,8 @@ extended_capitalisation_policy = lower
 [sqlfluff:rules:convention.terminator]
 multiline_newline = True
 
-[tool.sqlfluff.templater.jinja]
-apply_dbt_builtins = true
+[sqlfluff:templater]
+templater = jinja
+
+[sqlfluff:templater:jinja]
+apply_dbt_builtins = True

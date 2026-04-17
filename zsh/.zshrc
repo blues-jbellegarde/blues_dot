@@ -1,5 +1,5 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH:"$PATH:/Users/jbellegarde/.local/bin"
+export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
 
 # Path to your Oh My Zsh installation.
@@ -73,12 +73,18 @@ ZSH_THEME="ys" # set by `omz`
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
     git
-    poetry
 )
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [[ -f /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [[ -f /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
+fi
 
-source $ZSH/oh-my-zsh.sh
+# Custom completions (e.g. just)
+fpath=($HOME/.zsh/completions $fpath)
+
+[[ -d "$ZSH" ]] && source "$ZSH/oh-my-zsh.sh"
 
 # User configuration
 
@@ -111,41 +117,43 @@ source $ZSH/oh-my-zsh.sh
 alias ls="eza -ahl"
 
 # NVM pathing
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="$([ -z "${XDG_CONFIG_HOME-}" ] && printf %s "${HOME}/.nvm" || printf %s "${XDG_CONFIG_HOME}/nvm")"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 # Pyenv pathing
 export PYENV_ROOT="$HOME/.pyenv"
 [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-# Created by `pipx` on 2024-09-28 20:02:42
-# might override path?
-# export PATH="$PATH:/Users/jbellegarde/.local/bin"
-
-# Create image magick pathing
-export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"
+if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+fi
 
 
-# BEGIN opam configuration
-# This is useful if you're using opam as it adds:
-#   - the correct directories to the PATH
-#   - auto-completion for the opam binary
-# This section can be safely removed at any time if needed.
-[[ ! -r '/Users/jbellegarde/.opam/opam-init/init.zsh' ]] || source '/Users/jbellegarde/.opam/opam-init/init.zsh' > /dev/null 2> /dev/null
-# END opam configuration
-export PATH="$HOME/.jenv/bin:$PATH"
-eval "$(jenv init -)"
+# Image magick pathing (macOS-only)
+if [[ "$OSTYPE" == darwin* ]] && command -v brew >/dev/null 2>&1; then
+    export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:$DYLD_LIBRARY_PATH"
+fi
 
-# >>> juliaup initialize >>>
 
-# !! Contents within this block are managed by juliaup !!
+# Some aws vpn functions
+vpn-check() {
+    nc -z -G 3 "$DBT_KEY_REDSHIFT_HOST" 5439 2>/dev/null \
+    && echo "VPN OK - Redshift reachable" \
+    || echo "VPN DOWN - Redshift unreachable"
+}
 
-path=('/Users/jbellegarde/.juliaup/bin' $path)
-export PATH
+vpn-recover() {
+    local gw=$(netstat -nr | grep "default" | grep -v "utun" | awk '{print $2}' | head -1)
+    if [ -z "$gw" ]; then
+     echo "No non-VPN gateway found. Try: networksetup -getinfo Wi-Fi"
+     return 1
+    fi
+    echo "Restoring default gateway: $gw"
+    sudo route delete default
+    sudo route add default "$gw"
+    sudo dscacheutil -flushcache
+    sudo killall -HUP mDNSResponder
+    echo "Network restored. Flush DNS complete."
+}
 
-# <<< juliaup initialize <<<
-export PATH="/opt/homebrew/bin:$PATH"
-eval "$(rbenv init -)"

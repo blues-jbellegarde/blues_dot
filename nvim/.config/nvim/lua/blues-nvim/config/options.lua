@@ -60,4 +60,4 @@ opt.colorcolumn = "88"
 -- if vim.fn.executable("python3") > 0 then
 -- 	vim.g.python3_host_prog = system("which python3")
 -- end
-g.python3_host_prog = "/Users/jbellegarde/.pyenv/versions/neovim/bin/python"
+g.python3_host_prog = vim.loop.os_homedir() .. "/.pyenv/versions/neovim/bin/python"
