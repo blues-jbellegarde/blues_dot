@@ -18,12 +18,12 @@
 
 ## Git Safety (enforced by hooks)
 
-| Blocked                 | Alternative                          |
-| ----------------------- | ------------------------------------ |
-| Push to main/dev        | `/pr` skill                          |
-| Merge while on main/dev | GitHub PR                            |
-| Force push              | Ask user to confirm and run manually |
-| Hard reset              | `git stash` or `git-expert` agent    |
+| Blocked                          | Alternative                          |
+| -------------------------------- | ------------------------------------ |
+| Push to the trunk (main/master)  | `/pr` skill                          |
+| Merge while on the trunk         | GitHub PR                            |
+| Force push                       | Ask user to confirm and run manually |
+| Hard reset                       | `git stash` or `git-expert` agent    |
 
 ## Agents
 

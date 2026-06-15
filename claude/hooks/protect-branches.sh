@@ -20,12 +20,12 @@ COMMAND=$(echo "$INPUT" | jq -r '.command // empty' 2>/dev/null) || exit 0
 [[ "$COMMAND" =~ ^[[:space:]]*(git[[:space:]]) ]] || exit 0
 
 # --- Push to protected branches ---
-# Match "main" or "dev" only as a standalone argument (not inside branch names like feature/dev-fix).
-# Covers: git push origin main, git push -u origin dev, git push origin HEAD:main
-if echo "$COMMAND" | grep -qE 'git\s+push\s+.*(\s(main|dev)\s*$|\s(main|dev)\s|:(main|dev)\b)'; then
+# Match the trunk (main/master) only as a standalone argument (not inside branch names like feature/main-fix).
+# Covers: git push origin main, git push -u origin master, git push origin HEAD:main
+if echo "$COMMAND" | grep -qE 'git\s+push\s+.*(\s(main|master)\s*$|\s(main|master)\s|:(main|master)\b)'; then
     # Allow `git push --delete origin main` — handled by /delete-branch skill
     if ! echo "$COMMAND" | grep -qE 'git\s+push\s+--delete'; then
-        echo "BLOCKED: Pushing directly to main/dev is not allowed." >&2
+        echo "BLOCKED: Pushing directly to the trunk (main/master) is not allowed." >&2
         echo "Use the /pr skill to create a pull request instead." >&2
         exit 2
     fi
@@ -40,9 +40,9 @@ fi
 
 # --- Merge while on a protected branch ---
 if echo "$COMMAND" | grep -qE 'git\s+merge\b'; then
-    # Check if we're currently on main or dev
+    # Check if we're currently on the trunk (main/master)
     CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || true
-    if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "dev" ]]; then
+    if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
         echo "BLOCKED: Merging into $CURRENT_BRANCH is not allowed." >&2
         echo "Create a pull request on GitHub instead." >&2
         exit 2
@@ -50,7 +50,7 @@ if echo "$COMMAND" | grep -qE 'git\s+merge\b'; then
 fi
 
 # --- Switch to protected branch then merge (chained command) ---
-if echo "$COMMAND" | grep -qE 'git\s+switch\s+(main|dev)\b.*&&.*git\s+merge'; then
+if echo "$COMMAND" | grep -qE 'git\s+switch\s+(main|master)\b.*&&.*git\s+merge'; then
     echo "BLOCKED: Switching to a protected branch and merging is not allowed." >&2
     echo "Create a pull request on GitHub instead." >&2
     exit 2
