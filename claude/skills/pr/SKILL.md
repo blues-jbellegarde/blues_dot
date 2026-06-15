@@ -1,6 +1,6 @@
 ---
 name: pr
-description: ALWAYS use this skill when creating a pull request — never run gh pr create directly. Pushes branch and creates PR targeting dev with summary and test plan.
+description: ALWAYS use this skill when creating a pull request — never run gh pr create directly. Pushes branch and creates PR targeting the trunk (main) with summary and test plan.
 allowed-tools: Bash, Read, Glob, Grep
 argument-hint: "[base branch]"
 ---
@@ -9,12 +9,12 @@ argument-hint: "[base branch]"
 
 ## Key Rules
 
-- **Default base branch is `dev`**, not `main`
-- Never target `main` unless the user explicitly says so
+- **Default base branch is the trunk (`main`)** — trunk-based development: short-lived branches merge back to the trunk
+- To target a different base, pass it as the argument
 - PR title under 70 characters, plain English
 - Use description/body for details, not the title
 - Analyze ALL commits on the branch, not just the latest
-- Never create a PR from `main` or `dev` branches directly
+- Never create a PR from the trunk (`main`/`master`) directly
 
 ## Workflow
 
@@ -28,14 +28,13 @@ git log --oneline -5
 
 ### 2. Validate branch
 
-Refuse to create a PR if the current branch is `main` or `dev`. Tell the user to create a feature branch first.
+Refuse to create a PR if the current branch is the trunk (`main`/`master`). Tell the user to create a feature branch first.
 
 ### 3. Determine base branch
 
-- Default: `dev`
+- Default: the trunk (`main`)
 - If `$ARGUMENTS` was provided, use it as the base branch
-- If the user says "target main" or "base main", use `main`
-- Otherwise always use `dev`
+- Otherwise default to `main`
 - **Validate**: branch name must match `[a-zA-Z0-9._/-]+` — reject anything else
 
 ### 4. Analyze changes

@@ -9,10 +9,10 @@ argument-hint: "[branch name]"
 
 ## Key Rules
 
-- **Never delete `main` or `dev`**
+- **Never delete the trunk (`main`/`master`)**
 - Always remove the associated worktree first (if one exists), then prune, then delete the branch
 - Never ask whether to delete the worktree — always delete it
-- Use `git branch -d` (safe delete, requires merged), not `-D` unless the user explicitly asks
+- Prefer `git branch -d` (safe delete, requires merged). **Squash-merged** branches make `-d` fail (git doesn't see the squashed commit as containing the branch's commits) — verify the branch's content diff against the trunk is empty, then `-D` (see step 5). Only use `-D` directly when the user explicitly asks.
 - GitHub auto-deletes remote branches on PR merge — if remote delete fails with "does not exist", report success
 - Use `git switch` not `git checkout`
 
@@ -24,7 +24,7 @@ Use `$ARGUMENTS` as the branch to delete. If no argument was given, ask which br
 
 ### 2. Safety check
 
-- If the target branch is `main` or `dev`, refuse and explain why.
+- If the target branch is the trunk (`main`/`master`), refuse and explain why.
 - **Validate**: branch name must match `[a-zA-Z0-9._/-]+` — reject anything else.
 
 ### 3. Remove worktree (if any)
@@ -47,22 +47,32 @@ git worktree prune
 
 ### 4. Switch away
 
-If currently on the target branch, switch to `dev`:
+If currently on the target branch, switch to the trunk:
 
 ```bash
-git switch dev
+git switch main
 ```
 
-### 5. Update dev and delete local branch
+### 5. Update the trunk and delete local branch
 
-Fetch and fast-forward `dev` so the merge check reflects the remote state:
+Fetch and fast-forward the trunk so the merge check reflects the remote state:
 
 ```bash
-git pull --ff-only origin dev
+git pull --ff-only origin main
 git branch -d <branch>
 ```
 
-This is a safe delete that fails if the branch is not fully merged. Only use `-D` if the user explicitly requests a force delete.
+`git branch -d` is a safe delete that fails if the branch isn't fully merged.
+
+**Squash-merge fallback:** if the branch was merged via a squashed PR, `-d` fails because git doesn't recognize the squashed commit as containing the branch's commits. Confirm the branch adds nothing the trunk doesn't already have, then force-delete:
+
+```bash
+# Empty output = branch is fully represented in the trunk; safe to force-delete
+git diff main...<branch>
+git branch -D <branch>
+```
+
+Only use `-D` without this check if the user explicitly requests a force delete.
 
 ### 6. Delete remote branch
 
