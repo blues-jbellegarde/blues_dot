@@ -563,31 +563,35 @@ class NvimMCPServer:
                     return vim.json.encode({actions = {}, count = 0})
                 end
 
-                local actions = {}
-                for _, resp in pairs(results) do
+                -- Collect action objects once in a deterministic client-id order.
+                -- results is keyed by client_id and pairs() order is not stable, so
+                -- sort the keys to keep the display list and the execution list aligned
+                -- (otherwise execute_index could apply a different action than shown).
+                local client_ids = vim.tbl_keys(results)
+                table.sort(client_ids)
+                local all_actions = {}
+                for _, cid in ipairs(client_ids) do
+                    local resp = results[cid]
                     if resp.result then
                         for _, action in ipairs(resp.result) do
-                            table.insert(actions, {
-                                title = action.title,
-                                kind  = action.kind,
-                            })
+                            table.insert(all_actions, action)
                         end
                     end
+                end
+
+                -- Build the display list from that same ordered collection
+                local actions = {}
+                for _, action in ipairs(all_actions) do
+                    table.insert(actions, {
+                        title = action.title,
+                        kind  = action.kind,
+                    })
                 end
 
                 -- Execute a specific action if requested.
                 -- NOTE: a nil execute_index arrives from pynvim as vim.NIL (userdata),
                 -- which is truthy in Lua, so type-check rather than rely on truthiness.
                 if type(execute_index) == "number" and execute_index >= 1 and execute_index <= #actions then
-                    -- Re-collect the actual action objects to execute
-                    local all_actions = {}
-                    for _, resp in pairs(results) do
-                        if resp.result then
-                            for _, action in ipairs(resp.result) do
-                                table.insert(all_actions, action)
-                            end
-                        end
-                    end
                     local chosen = all_actions[execute_index]
                     if chosen.edit then
                         vim.lsp.util.apply_workspace_edit(chosen.edit, "utf-8")
