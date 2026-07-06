@@ -69,17 +69,17 @@ git branch -d <branch>
 Do **not** use a three-dot diff (`git diff main...<branch>`) for this check: three-dot diffs against the merge-base (the old fork point), so it keeps reporting the branch's own changes even after they've been squashed into the trunk — and it also flags files the branch is merely _stale_ on (where the trunk moved ahead). Instead compare the tips directly, limited to the files the branch actually changed:
 
 ```bash
-# Files the branch changed relative to where it forked
+# Files the branch changed relative to where it forked (array preserves paths with spaces)
 base=$(git merge-base main <branch>)
-changed=$(git diff --name-only "$base" <branch>)
+mapfile -t changed < <(git diff --name-only "$base" <branch>)
 
 # Empty output = the trunk's tip already has all of the branch's work; safe to force-delete
-[ -z "$changed" ] || git diff main <branch> -- $changed
+[ ${#changed[@]} -eq 0 ] || git diff main <branch> -- "${changed[@]}"
 
 git branch -D <branch>
 ```
 
-If that tip-to-tip diff is non-empty, the branch has real unmerged work — stop and do not delete. Only use `-D` without this check if the user explicitly requests a force delete.
+If that tip-to-tip diff is non-empty, the result is **inconclusive** — it may mean the branch has unmerged work, or simply that `main` moved ahead on a file the branch also touched (divergence). Either way, stop: surface the diff and let the user decide, and force-delete only if they explicitly request it. (No purely local check is fully reliable for squash-merges; when in doubt, confirm the PR is merged via `gh pr view <branch> --json state,mergedAt`.)
 
 ### 6. Delete remote branch
 
