@@ -73,6 +73,9 @@ local/
 private/
 secret/
 
+# Claude Code project-local settings (machine-specific)
+.claude/settings.local.json
+
 # Git
 .git/
 
