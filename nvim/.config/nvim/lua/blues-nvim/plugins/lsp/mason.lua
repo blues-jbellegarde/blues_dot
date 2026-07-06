@@ -33,6 +33,7 @@ return {
 				"gopls", -- Go LSP
 				"ts_ls", -- TypeScript/JavaScript LSP
 				"just", -- Just/Justfile LSP
+				"clangd", -- C/C++ LSP
 			},
 			-- auto-install configured servers (with lspconfig)
 			automatic_installation = true, -- not the same as ensure_installed
