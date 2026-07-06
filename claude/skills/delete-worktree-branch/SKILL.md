@@ -12,7 +12,7 @@ argument-hint: "[branch name]"
 - **Never delete the trunk (`main`/`master`)**
 - Always remove the associated worktree first (if one exists), then prune, then delete the branch
 - Never ask whether to delete the worktree — always delete it
-- Prefer `git branch -d` (safe delete, requires merged). **Squash-merged** branches make `-d` fail (git doesn't see the squashed commit as containing the branch's commits) — verify the branch's content diff against the trunk is empty, then `-D` (see step 5). Only use `-D` directly when the user explicitly asks.
+- Prefer `git branch -d` (safe delete, requires merged). **Squash-merged** branches make `-d` fail (git doesn't see the squashed commit as containing the branch's commits) — verify the trunk already contains the branch's changes (a tip-to-tip diff limited to the files the branch touched, not a three-dot diff), then `-D` (see step 5). Only use `-D` directly when the user explicitly asks.
 - GitHub auto-deletes remote branches on PR merge — if remote delete fails with "does not exist", report success
 - Use `git switch` not `git checkout`
 
@@ -64,15 +64,22 @@ git branch -d <branch>
 
 `git branch -d` is a safe delete that fails if the branch isn't fully merged.
 
-**Squash-merge fallback:** if the branch was merged via a squashed PR, `-d` fails because git doesn't recognize the squashed commit as containing the branch's commits. Confirm the branch adds nothing the trunk doesn't already have, then force-delete:
+**Squash-merge fallback:** if the branch was merged via a squashed PR, `-d` fails because git doesn't recognize the squashed commit as containing the branch's commits. Confirm the trunk already contains everything the branch changed, then force-delete.
+
+Do **not** use a three-dot diff (`git diff main...<branch>`) for this check: three-dot diffs against the merge-base (the old fork point), so it keeps reporting the branch's own changes even after they've been squashed into the trunk — and it also flags files the branch is merely _stale_ on (where the trunk moved ahead). Instead compare the tips directly, limited to the files the branch actually changed:
 
 ```bash
-# Empty output = branch is fully represented in the trunk; safe to force-delete
-git diff main...<branch>
+# Files the branch changed relative to where it forked
+base=$(git merge-base main <branch>)
+changed=$(git diff --name-only "$base" <branch>)
+
+# Empty output = the trunk's tip already has all of the branch's work; safe to force-delete
+[ -z "$changed" ] || git diff main <branch> -- $changed
+
 git branch -D <branch>
 ```
 
-Only use `-D` without this check if the user explicitly requests a force delete.
+If that tip-to-tip diff is non-empty, the branch has real unmerged work — stop and do not delete. Only use `-D` without this check if the user explicitly requests a force delete.
 
 ### 6. Delete remote branch
 
