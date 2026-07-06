@@ -56,6 +56,7 @@ Each recipe is idempotent and can be run independently.
 | `setup-shell`         | Oh My Zsh + set zsh as default           |
 | `setup-pyenv`         | Install pyenv and pyenv-virtualenv       |
 | `setup-python`        | Latest stable Python + neovim venv       |
+| `upgrade-python`      | Rebuild neovim venv on latest Python     |
 | `setup-nvm`           | nvm + latest LTS Node                    |
 | `setup-uv`            | uv package manager                       |
 | `stow-all`            | Symlink dotfiles (OS-aware)              |
