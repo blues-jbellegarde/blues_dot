@@ -139,8 +139,16 @@ setup-pyenv:
         echo "pyenv installed: $(pyenv --version)"
     fi
 
-# Install latest stable Python and create neovim venv
-setup-python:
+# Install latest stable Python + create neovim venv (bootstrap; keeps an existing venv)
+setup-python: (_neovim-python "keep")
+
+# Upgrade to the latest stable Python and rebuild the neovim venv fresh (pynvim only)
+upgrade-python: (_neovim-python "rebuild")
+
+# Ensure latest stable Python is installed/global and the neovim venv exists with pynvim.
+# mode="keep" preserves an existing venv; mode="rebuild" deletes and recreates it.
+[private]
+_neovim-python mode="keep":
     #!/usr/bin/env bash
     set -euo pipefail
     export PYENV_ROOT="$HOME/.pyenv"
@@ -161,17 +169,23 @@ setup-python:
     fi
     pyenv global "$latest"
 
+    # In rebuild mode, drop any existing neovim venv so it is recreated on $latest
+    if [[ "{{ mode }}" == "rebuild" ]] && pyenv virtualenvs --bare | grep -q '^neovim$'; then
+        echo "Removing existing neovim virtualenv for rebuild..."
+        pyenv virtualenv-delete -f neovim
+    fi
+
     # Create neovim venv if not present
     if pyenv virtualenvs --bare | grep -q '^neovim$'; then
         echo "neovim virtualenv already exists"
     else
-        echo "Creating neovim virtualenv..."
+        echo "Creating neovim virtualenv on $latest..."
         pyenv virtualenv "$latest" neovim
     fi
 
     # Install/upgrade pynvim
     echo "Installing pynvim in neovim venv..."
-    PYENV_VERSION=neovim pyenv exec pip install --upgrade pynvim
+    PYENV_VERSION=neovim pyenv exec pip install --upgrade pip pynvim
 
 # Install nvm and latest LTS Node
 setup-nvm:
