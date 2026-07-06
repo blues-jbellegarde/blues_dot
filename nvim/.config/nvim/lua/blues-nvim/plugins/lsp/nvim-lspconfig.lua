@@ -199,6 +199,23 @@ return {
 			on_attach = on_attach,
 		})
 
+		-- C/C++ language server
+		vim.lsp.config("clangd", {
+			cmd = { vim.fn.exepath("clangd") },
+			filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+			root_markers = {
+				"compile_commands.json",
+				"compile_flags.txt",
+				".clangd",
+				".clang-tidy",
+				".clang-format",
+				"configure.ac",
+				".git",
+			},
+			capabilities = capabilities,
+			on_attach = on_attach,
+		})
+
 		-- Enable the configured servers
 		vim.lsp.enable("lua_ls")
 		vim.lsp.enable("pylsp")
@@ -206,5 +223,6 @@ return {
 		vim.lsp.enable("ts_ls")
 		vim.lsp.enable("bashls")
 		vim.lsp.enable("just")
+		vim.lsp.enable("clangd")
 	end,
 }
