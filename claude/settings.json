@@ -29,5 +29,7 @@
     "type": "command",
     "command": "bash ~/.claude/analytics-statusline.sh"
   },
-  "model": "opus[1m]"
+  "model": "opus[1m]",
+  "tui": "fullscreen",
+  "skipWorkflowUsageWarning": true
 }
