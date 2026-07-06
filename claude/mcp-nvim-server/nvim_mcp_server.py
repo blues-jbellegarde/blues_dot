@@ -575,8 +575,10 @@ class NvimMCPServer:
                     end
                 end
 
-                -- Execute a specific action if requested
-                if execute_index and execute_index >= 1 and execute_index <= #actions then
+                -- Execute a specific action if requested.
+                -- NOTE: a nil execute_index arrives from pynvim as vim.NIL (userdata),
+                -- which is truthy in Lua, so type-check rather than rely on truthiness.
+                if type(execute_index) == "number" and execute_index >= 1 and execute_index <= #actions then
                     -- Re-collect the actual action objects to execute
                     local all_actions = {}
                     for _, resp in pairs(results) do
