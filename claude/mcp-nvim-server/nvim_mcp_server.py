@@ -25,6 +25,13 @@ LSP_TIMEOUT_S = 10
 LSP_REQUEST_TIMEOUT_MS = 5000
 LINT_SETTLE_S = 1.0
 DIAG_SETTLE_S = 0.5
+# Symbol requests (workspace/documentSymbol) can return empty on a cold server
+# that has attached but not finished indexing; poll a few times before giving up.
+SYMBOL_RETRIES = 5
+SYMBOL_SETTLE_S = 0.6
+# workspace/symbol: how many times to poll for a capable language server to
+# attach before concluding the language doesn't support it (× SYMBOL_SETTLE_S).
+WS_CAPABILITY_RETRIES = 8
 
 
 @dataclass
@@ -34,6 +41,11 @@ class MCPTool:
     name: str
     description: str
     inputSchema: Dict[str, Any]
+    # When True, the tool is pinned into context at session start via
+    # `_meta: {"anthropic/alwaysLoad": true}` instead of being deferred behind
+    # Claude Code's tool search. Reserved for the semantic navigation/edit tools
+    # so Claude reaches for them without a discover-then-load round trip.
+    always_load: bool = False
 
 
 class NvimMCPServer:
@@ -96,7 +108,7 @@ class NvimMCPServer:
     def _setup_tools(self):
         self.tools["nvim_format"] = MCPTool(
             name="nvim_format",
-            description="Format a file using conform.nvim (uses the same formatters as interactive Neovim: black, prettier, gofumpt, stylua, etc.)",
+            description="Format a file using conform.nvim (same formatters as interactive Neovim: black, prettier, gofumpt, stylua, etc.). Respects project config (.prettierrc, pyproject.toml, .editorconfig). Note: files Claude edits are auto-formatted by the PostToolUse hook, so call this only for files changed outside that flow.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -111,7 +123,7 @@ class NvimMCPServer:
 
         self.tools["nvim_lint"] = MCPTool(
             name="nvim_lint",
-            description="Lint a file using nvim-lint and return structured diagnostics (pylint, eslint_d, golangci-lint, selene, sqlfluff)",
+            description="Lint a file using nvim-lint and return structured diagnostics (pylint, eslint_d, golangci-lint, selene, sqlfluff). Respects project linter configs (.pylintrc, .eslintrc, .golangci.yml, .sqlfluff). Note: files Claude edits are auto-linted by the PostToolUse hook.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -139,9 +151,46 @@ class NvimMCPServer:
             },
         )
 
+        self.tools["nvim_workspace_symbols"] = MCPTool(
+            name="nvim_workspace_symbols",
+            always_load=True,
+            description="Find where a symbol (function/class/method/variable) is defined by NAME across the whole project using LSP. This is the semantic replacement for Grep/rg when searching for a code identifier: use it FIRST to go from a name to exact locations (file/line/col/kind) with no false hits in comments or strings, then feed a location into nvim_references / nvim_definition / nvim_get_node. Anchor the project + language with file_path (any file in the target repo of the same language).",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Symbol name or prefix to search for (e.g. 'process_order')",
+                    },
+                    "file_path": {
+                        "type": "string",
+                        "description": "Absolute path to any file in the target project of the same language as the symbol (anchors the LSP root and language server)",
+                    },
+                },
+                "required": ["query", "file_path"],
+            },
+        )
+
+        self.tools["nvim_document_symbols"] = MCPTool(
+            name="nvim_document_symbols",
+            always_load=True,
+            description="List the symbol outline (functions/classes/methods/fields) of a single file using LSP. Use INSTEAD OF Read/Grep to see what a file defines and at which lines, without loading the whole file. Pair with nvim_get_node to pull one definition's source.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": "Absolute path to the file to outline",
+                    },
+                },
+                "required": ["file_path"],
+            },
+        )
+
         self.tools["nvim_rename"] = MCPTool(
             name="nvim_rename",
-            description="Rename a symbol across files using LSP (saves tokens vs. grep + multi-edit)",
+            always_load=True,
+            description="Rename a symbol across the whole project using LSP. Use INSTEAD OF grep + multi-file Edit: it renames every reference semantically (no missed usages, no false hits in comments/strings) and writes all files. Locate the symbol's line/col first with nvim_workspace_symbols if unknown.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -168,7 +217,8 @@ class NvimMCPServer:
 
         self.tools["nvim_references"] = MCPTool(
             name="nvim_references",
-            description="Find all references to a symbol using LSP (semantic, no false positives)",
+            always_load=True,
+            description="Find every usage of a symbol project-wide using LSP. Use INSTEAD OF Grep/rg when tracing where a function/class/variable is used: results are semantic (no false hits in comments, strings, or unrelated same-named symbols) and typically ~80% fewer tokens than a grep dump. Needs the symbol's line/col — get it from nvim_workspace_symbols if you only know the name.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -191,7 +241,8 @@ class NvimMCPServer:
 
         self.tools["nvim_definition"] = MCPTool(
             name="nvim_definition",
-            description="Go to the definition of a symbol using LSP (exact location, no searching)",
+            always_load=True,
+            description="Jump to where a symbol is defined using LSP. Use INSTEAD OF Grep when you have a symbol usage and want its definition: returns the exact file/line/col, resolving imports and overloads (no guessing among same-named matches). Needs the usage's line/col.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -214,7 +265,8 @@ class NvimMCPServer:
 
         self.tools["nvim_code_action"] = MCPTool(
             name="nvim_code_action",
-            description="List and optionally execute LSP code actions (auto-imports, quick fixes) for a position or range",
+            always_load=True,
+            description="List and optionally execute LSP code actions (auto-import, quick fixes, missing-symbol fixes) at a position. Use INSTEAD OF hand-editing imports or manually applying a diagnostic's suggested fix. Call without execute_index to list actions, then again with the 1-based index to apply one.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -235,7 +287,8 @@ class NvimMCPServer:
 
         self.tools["nvim_get_node"] = MCPTool(
             name="nvim_get_node",
-            description="Extract a treesitter AST node (function, class, method) from a file. Useful for targeted reads of large files without loading the entire file.",
+            always_load=True,
+            description="Extract a single treesitter AST node (function, class, method) from a file. Use INSTEAD OF Read when you only need one function/class from a large file — returns just that node's source and range, not the whole file. Pair with nvim_workspace_symbols (name -> line) to pull a specific definition.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -302,6 +355,15 @@ class NvimMCPServer:
                 arguments["col"],
                 arguments["new_name"],
             )
+
+        if tool_name == "nvim_workspace_symbols":
+            return self._exec_workspace_symbols(
+                arguments["file_path"],
+                arguments["query"],
+            )
+
+        if tool_name == "nvim_document_symbols":
+            return self._exec_document_symbols(arguments["file_path"])
 
         if tool_name == "nvim_references":
             return self._exec_references(
@@ -447,6 +509,184 @@ class NvimMCPServer:
                 LSP_REQUEST_TIMEOUT_MS,
             )
             return result
+        except Exception as exc:
+            return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
+
+    def _exec_workspace_symbols(self, file_path: str, query: str) -> str:
+        try:
+            self._open_file(file_path)
+            if not self._wait_for_lsp():
+                return json.dumps({"error": "LSP not available", "file": file_path})
+
+            # Some servers (notably pylsp) don't support workspace/symbol. Detect
+            # that so an empty result reads as "unsupported → fall back" rather
+            # than "symbol not found". Poll for a capable client: _wait_for_lsp
+            # returns as soon as ANY client attaches (e.g. Copilot), but the
+            # primary language server may register a moment later.
+            support = {"supported": False, "clients": []}
+            for _ in range(WS_CAPABILITY_RETRIES):
+                support = json.loads(self.nvim.exec_lua("""
+                        local names = {}
+                        local supported = false
+                        for _, c in ipairs(vim.lsp.get_clients({bufnr = 0})) do
+                            table.insert(names, c.name)
+                            if c.server_capabilities.workspaceSymbolProvider then
+                                supported = true
+                            end
+                        end
+                        return vim.json.encode({supported = supported, clients = names})
+                        """))
+                if support.get("supported"):
+                    break
+                time.sleep(SYMBOL_SETTLE_S)
+            if not support.get("supported"):
+                clients = ", ".join(support.get("clients", [])) or "none"
+                return json.dumps(
+                    {
+                        "symbols": [],
+                        "count": 0,
+                        "note": (
+                            f"The attached LSP(s) ({clients}) do not support "
+                            "workspace/symbol for this language. Fall back to "
+                            "nvim_document_symbols on a known file, or Grep."
+                        ),
+                    }
+                )
+
+            lua = """
+                local args = {...}
+                local query = args[1]
+                local timeout_ms = args[2]
+                local params = {query = query}
+
+                local results = vim.lsp.buf_request_sync(0, "workspace/symbol", params, timeout_ms)
+                if not results or vim.tbl_isempty(results) then
+                    return vim.json.encode({symbols = {}, count = 0})
+                end
+
+                local symbols = {}
+                for _, resp in pairs(results) do
+                    if resp.result then
+                        for _, sym in ipairs(resp.result) do
+                            local loc = sym.location
+                            local uri = loc and (loc.uri or loc.targetUri)
+                            local range = loc and (loc.range or loc.targetSelectionRange or loc.targetRange)
+                            if uri and range then
+                                table.insert(symbols, {
+                                    name      = sym.name,
+                                    kind      = vim.lsp.protocol.SymbolKind[sym.kind] or sym.kind,
+                                    container = sym.containerName,
+                                    file      = vim.uri_to_fname(uri),
+                                    line      = range.start.line + 1,
+                                    col       = range.start.character + 1,
+                                })
+                            end
+                        end
+                    end
+                end
+
+                return vim.json.encode({symbols = symbols, count = #symbols})
+                """
+            return self._poll_symbols(lua, query, LSP_REQUEST_TIMEOUT_MS)
+        except Exception as exc:
+            return json.dumps({"error": str(exc), "file": file_path})
+        finally:
+            self._close_buffer()
+
+    def _poll_symbols(self, lua: str, *args) -> str:
+        """Run a symbol request, retrying while it returns empty.
+
+        A freshly attached language server may not have finished indexing, so
+        the first request can come back with count 0 even when symbols exist.
+        Retry a few times and return the first non-empty result (or the last
+        empty one if the symbol genuinely doesn't exist).
+        """
+        result = self.nvim.exec_lua(lua, *args)
+        for _ in range(SYMBOL_RETRIES - 1):
+            try:
+                if json.loads(result).get("count", 0) > 0:
+                    break
+            except (ValueError, TypeError):
+                break
+            time.sleep(SYMBOL_SETTLE_S)
+            result = self.nvim.exec_lua(lua, *args)
+        return result
+
+    def _exec_document_symbols(self, file_path: str) -> str:
+        try:
+            self._open_file(file_path)
+            if not self._wait_for_lsp():
+                return json.dumps({"error": "LSP not available", "file": file_path})
+
+            lua = """
+                local timeout_ms = select(1, ...)
+                local params = {textDocument = vim.lsp.util.make_text_document_params(0)}
+
+                local results = vim.lsp.buf_request_sync(0, "textDocument/documentSymbol", params, timeout_ms)
+                if not results or vim.tbl_isempty(results) then
+                    return vim.json.encode({symbols = {}, count = 0})
+                end
+
+                local symbols = {}
+
+                -- SymbolInformation ranges (e.g. pylsp) start at the def/class
+                -- keyword, not the identifier — so a downstream references /
+                -- definition call at that column finds nothing. Refine the
+                -- column to the name's position on that line (current buffer).
+                local function name_col(lnum0, start_char, name)
+                    local lines = vim.api.nvim_buf_get_lines(0, lnum0, lnum0 + 1, false)
+                    local line = lines[1]
+                    if line and name then
+                        local idx = line:find(name, 1, true)
+                        if idx then return idx end
+                    end
+                    return start_char + 1
+                end
+
+                -- documentSymbol may return hierarchical DocumentSymbol[] (with
+                -- .selectionRange/.children) or flat SymbolInformation[] (with
+                -- .location); handle both and flatten nested nodes.
+                local function add(sym, container)
+                    if sym.location then
+                        local range = sym.location.range
+                        table.insert(symbols, {
+                            name      = sym.name,
+                            kind      = vim.lsp.protocol.SymbolKind[sym.kind] or sym.kind,
+                            container = sym.containerName or container,
+                            line      = range.start.line + 1,
+                            col       = name_col(range.start.line, range.start.character, sym.name),
+                        })
+                    else
+                        -- selectionRange already targets the identifier
+                        local range = sym.selectionRange or sym.range
+                        table.insert(symbols, {
+                            name      = sym.name,
+                            kind      = vim.lsp.protocol.SymbolKind[sym.kind] or sym.kind,
+                            container = container,
+                            line      = range.start.line + 1,
+                            col       = range.start.character + 1,
+                        })
+                        if sym.children then
+                            for _, child in ipairs(sym.children) do
+                                add(child, sym.name)
+                            end
+                        end
+                    end
+                end
+
+                for _, resp in pairs(results) do
+                    if resp.result then
+                        for _, sym in ipairs(resp.result) do
+                            add(sym, nil)
+                        end
+                    end
+                end
+
+                return vim.json.encode({symbols = symbols, count = #symbols})
+                """
+            return self._poll_symbols(lua, LSP_REQUEST_TIMEOUT_MS)
         except Exception as exc:
             return json.dumps({"error": str(exc), "file": file_path})
         finally:
@@ -723,6 +963,11 @@ class NvimMCPServer:
                             "name": t.name,
                             "description": t.description,
                             "inputSchema": t.inputSchema,
+                            **(
+                                {"_meta": {"anthropic/alwaysLoad": True}}
+                                if t.always_load
+                                else {}
+                            ),
                         }
                         for t in self.tools.values()
                     ]

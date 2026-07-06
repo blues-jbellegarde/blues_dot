@@ -17,10 +17,19 @@ check-deps *deps:
     fi
 
 # Deploy all Claude Code config to ~/.claude/
-claude-deploy: (check-deps "rsync" "uv")
+claude-deploy: (check-deps "rsync" "uv") claude-register-mcp
     @echo "Deploying dotfiles → ~/.claude/"
     rsync -a --exclude '.venv' --exclude '__pycache__' claude/ ~/.claude/
     cd ~/.claude/mcp-nvim-server && uv sync
+
+# Register the neovim MCP server (user scope) — idempotent
+claude-register-mcp: (check-deps "claude")
+    #!/usr/bin/env bash
+    set -euo pipefail
+    # Re-register so the command path/args stay in sync with this repo.
+    claude mcp remove neovim -s user 2>/dev/null || true
+    claude mcp add neovim -s user -- "$HOME/.claude/mcp-nvim-server/start-server.sh"
+    echo "Registered neovim MCP server (user scope)"
 
 # Pull Claude Code config changes back to dotfiles repo
 claude-pull: (check-deps "rsync")
@@ -244,6 +253,10 @@ setup-claude: (check-deps "rsync" "uv")
     echo "Deploying Claude Code config..."
     rsync -a --exclude '.venv' --exclude '__pycache__' claude/ ~/.claude/
     cd ~/.claude/mcp-nvim-server && uv sync
+    # Register the neovim MCP server (user scope, idempotent)
+    echo "Registering neovim MCP server..."
+    claude mcp remove neovim -s user 2>/dev/null || true
+    claude mcp add neovim -s user -- "$HOME/.claude/mcp-nvim-server/start-server.sh"
     # Start headless nvim
     echo "Starting headless nvim..."
     nvim --server {{ nvim_socket }} --remote-send ':qa!<CR>' 2>/dev/null || true

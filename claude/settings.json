@@ -8,6 +8,21 @@
             "type": "command",
             "command": "bash ~/.claude/hooks/protect-branches.sh",
             "timeout": 5000
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/nudge-lsp.sh",
+            "timeout": 5000
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/nudge-lsp.sh",
+            "timeout": 5000
           }
         ]
       }

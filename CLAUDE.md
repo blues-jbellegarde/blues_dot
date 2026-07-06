@@ -95,7 +95,8 @@ The `claude/` directory contains all user-managed Claude Code config. It is NOT 
 
 **Management (via justfile):**
 
-- `just claude-deploy` — deploy all config (settings, hooks, agents, skills, MCP server) to `~/.claude/`
+- `just claude-deploy` — deploy all config (settings, hooks, agents, skills, MCP server) to `~/.claude/` (also registers the MCP server)
+- `just claude-register-mcp` — (re)register the `neovim` MCP server at user scope (idempotent; reproduces the entry a fresh machine needs)
 - `just claude-pull` — pull config changes from `~/.claude/` back to dotfiles repo
 - `just claude-nvim-status` — check headless nvim status
 - `just claude-nvim-restart` — restart headless nvim after config changes
@@ -103,16 +104,24 @@ The `claude/` directory contains all user-managed Claude Code config. It is NOT 
 
 ## Neovim Headless MCP Server
 
-A custom MCP server (`claude/mcp-nvim-server/`) bridges Claude Code to a persistent Neovim headless instance. Prefer these tools over built-in alternatives when they save tokens:
+A custom MCP server (`claude/mcp-nvim-server/`) bridges Claude Code to a persistent Neovim headless instance, exposing LSP + treesitter navigation over the socket.
 
-**When to use nvim MCP tools:**
+**Navigating code? Default to the semantic tools, not text search.** For anything involving a code symbol (function/class/method/variable), reach for the nvim tools first — they are semantic (no false hits in comments/strings), return exact positions, and cost ~80% fewer tokens than a grep dump.
 
-- **Rename symbol** → `nvim_rename` instead of grep + multi-file Edit (cross-file LSP rename)
-- **Find references** → `nvim_references` instead of Grep (semantic, no false positives)
-- **Find definition** → `nvim_definition` instead of Grep (exact location)
-- **Read specific function from large file** → `nvim_get_node` instead of reading entire file
-- **Auto-fix imports** → `nvim_code_action` for LSP quick fixes
-- **Query large JSON files** → `jq` to extract sections from Grafana dashboards, configs, etc.
+| Goal                                    | Use                      | Instead of             |
+| --------------------------------------- | ------------------------ | ---------------------- |
+| Find a symbol by **name** (entry point) | `nvim_workspace_symbols` | `Grep` / `rg`          |
+| See what one file defines (outline)     | `nvim_document_symbols`  | reading the whole file |
+| All usages of a symbol                  | `nvim_references`        | `Grep`                 |
+| Jump to a definition                    | `nvim_definition`        | `Grep`                 |
+| Read one function from a big file       | `nvim_get_node`          | `Read`                 |
+| Rename across files                     | `nvim_rename`            | grep + multi-file Edit |
+| Auto-fix imports / apply a quick fix    | `nvim_code_action`       | hand-editing imports   |
+| Extract from a large JSON file          | `jq`                     | reading the whole file |
+
+Typical flow: `nvim_workspace_symbols` (name → file/line/col) → feed that position into `nvim_references` / `nvim_definition` / `nvim_get_node`. `nvim_workspace_symbols` needs `file_path` set to any file in the target repo of the same language (it anchors the LSP root).
+
+**`Grep` / `Read` remain correct** for prose, logs, config, SQL/dbt, non-symbol text, and quick one-off pattern checks. A PreToolUse hook (`nudge-lsp.sh`) reminds you when a grep looks like a symbol search — it never blocks.
 
 **Handled automatically by PostToolUse hook (no action needed):**
 
