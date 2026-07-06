@@ -161,7 +161,7 @@ _neovim-python mode="keep":
     echo "Latest stable Python: $latest"
 
     # Install if not present
-    if pyenv versions --bare | grep -qx "$latest"; then
+    if pyenv versions --bare | grep -Fqx "$latest"; then
         echo "Python $latest already installed"
     else
         echo "Installing Python $latest..."
@@ -170,13 +170,13 @@ _neovim-python mode="keep":
     pyenv global "$latest"
 
     # In rebuild mode, drop any existing neovim venv so it is recreated on $latest
-    if [[ "{{ mode }}" == "rebuild" ]] && pyenv virtualenvs --bare | grep -q '^neovim$'; then
+    if [[ "{{ mode }}" == "rebuild" ]] && pyenv virtualenvs --bare | grep -Fqx neovim; then
         echo "Removing existing neovim virtualenv for rebuild..."
         pyenv virtualenv-delete -f neovim
     fi
 
     # Create neovim venv if not present
-    if pyenv virtualenvs --bare | grep -q '^neovim$'; then
+    if pyenv virtualenvs --bare | grep -Fqx neovim; then
         echo "neovim virtualenv already exists"
     else
         echo "Creating neovim virtualenv on $latest..."
