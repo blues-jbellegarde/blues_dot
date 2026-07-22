@@ -17,7 +17,7 @@
         ]
       },
       {
-        "matcher": "Grep",
+        "matcher": "Grep|Read",
         "hooks": [
           {
             "type": "command",

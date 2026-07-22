@@ -51,3 +51,7 @@ no false hits in comments/strings, exact positions, ~80% fewer tokens than grep.
 Flow: `nvim_workspace_symbols` (name → file/line/col) → feed the position into
 `nvim_references` / `nvim_definition` / `nvim_get_node`. `Grep`/`Read` stay
 correct for prose, logs, config, SQL, and non-symbol text.
+
+When spawning a subagent (Explore, general-purpose, Task) for code-navigation or
+symbol work, tell it in the prompt to use these nvim LSP tools — built-in
+subagents don't inherit this guidance and otherwise default to grep/Read.

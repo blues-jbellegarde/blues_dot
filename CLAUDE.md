@@ -121,7 +121,9 @@ A custom MCP server (`claude/mcp-nvim-server/`) bridges Claude Code to a persist
 
 Typical flow: `nvim_workspace_symbols` (name → file/line/col) → feed that position into `nvim_references` / `nvim_definition` / `nvim_get_node`. `nvim_workspace_symbols` needs `file_path` set to any file in the target repo of the same language (it anchors the LSP root).
 
-**`Grep` / `Read` remain correct** for prose, logs, config, SQL/dbt, non-symbol text, and quick one-off pattern checks. A PreToolUse hook (`nudge-lsp.sh`) reminds you when a grep looks like a symbol search — it never blocks.
+**`Grep` / `Read` remain correct** for prose, logs, config, SQL/dbt, non-symbol text, and quick one-off pattern checks. A PreToolUse hook (`nudge-lsp.sh`) reminds you when a grep or whole-file read looks like symbol work — it never blocks.
+
+**Delegating to subagents?** Built-in subagents (Explore, general-purpose, Task) do NOT inherit this guidance and will default to grep/Read. When you spawn one for code-navigation or symbol work, spell out in its prompt that it should use the nvim LSP tools (`nvim_workspace_symbols` → `nvim_references`/`nvim_definition`/`nvim_get_node`) instead of grep/Read.
 
 **Handled automatically by PostToolUse hook (no action needed):**
 
